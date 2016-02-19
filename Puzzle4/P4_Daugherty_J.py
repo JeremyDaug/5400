@@ -47,50 +47,41 @@ if __name__ == '__main__':
     # Holds the list of finished Colors.
     ColorsFinished = []
     # Head to start with, will change with to the color we are working on at the time.
-    Head = Grid.Node({'parent': None,
-                      'curr': None,
-                      'color': '',
-                      'dist': 0
-                      })
+    master_head = Grid.Node({'parent': None,
+                             'curr': None,
+                             'color': '',
+                             'dist': 0
+                             })
 
     # Start looping through the colors, closest colors first.
     done = False
     while not done:
-        # look for the first color
-        closest = (10000000, '')  # tuple is effectively a placeholder
-        for i in Space.starts:
-            curr = Space.distance(Space.starts[i][0], Space.starts[i][1])
-            if curr < closest[0] and i not in ColorsFinished:
-
-                closest = (curr, i)
-
-        # get a copy of our current color for later and move on.
-        currentcolor = closest[1]
-
-        # if there is no closest get out cause we're done.
-        if closest[1] == '':
-            break
-
-        # We have the color with the shortest distance, let's put it in as the head, add to frontier,
-        #  and get 'xplorin'.
-        Head.value['dist'] = closest[0]
-        Head.value['curr'] = Space.starts[currentcolor][0]
-        Head.value['color'] = currentcolor
-        frontier.append(Head)
-
+        # Put our starting points in our
         movestaken = []
+        for i in Space.starts:
+            # put our starting points in the frontier.
+            master_head.children.append(Grid.Node({'parent': None,
+                                                   'curr': Space.starts[i][0],
+                                                   'color': i,
+                                                   'dist': Space.distance(Space.starts[i][0],Space.starts[i][1])}))
+            frontier.append(master_head.children[-1])
+            movestaken.append(Space.starts[i])
 
-        Path = False
-        while not Path:
+        Path = None
+        while Path is None:
             # Get the current closest point in frontier.
             closest2 = (1000000000, 0)
             for i in range(len(frontier)):
-                if frontier[i].value['dist'] < closest2[0]:
+                print('steps taken', frontier[i].node_depth())
+                if (frontier[i].value['dist']+frontier[i].node_depth()) < closest2[0] and \
+                        frontier[i].value['color'] not in ColorsFinished:
                     closest2 = (frontier[i].value['dist'], i)
                 # print('Frontier', frontier[i].value['curr'], frontier[i].value['dist'])
+                print('closest', closest2[0], frontier[closest2[1]].value['curr'])
 
             # we now have our current space.
             curr = frontier.pop(closest2[1])
+            currentcolor = curr.value['color']
 
             # add our current space to the list of moves taken preemptively.
             movestaken.append(curr.value['curr'])
@@ -100,108 +91,54 @@ if __name__ == '__main__':
 
             # Up
             end = (curr.value['curr'][0]-1, curr.value['curr'][1])
-            action = Space.move_valid(start, end, currentcolor, movestaken)
-
-            # if action is valid, and no path has been found, # movevalid checks if the space is not been touched yet.
-            if (action == currentcolor or action == 'e') and not Path:
-
-                curr.children.append(Grid.Node(value={'dist': Space.distance(end, Space.starts[currentcolor][1]),
-                                                      'curr': end,
-                                                      'color': currentcolor,
-                                                      'parent': curr
-                                                      }))
-                frontier.append(curr.children[-1])
-                movestaken.append(end)
-
-                # if current color is an appropriate end point
-                if Space.starts[currentcolor][1] == end:
-                    # add our color to completed colors section preemptively since we found a path.
-                    ColorsFinished.append(currentcolor)
-                    # The Node we want is put into path to make it read true.
-                    Path = frontier[-1]
+            # print("start and end", start, end)
+            if Path is None:
+                print('up')
+                Path = Space.complete_action( curr, end, currentcolor, movestaken, frontier)
 
             # right
             end = (curr.value['curr'][0], curr.value['curr'][1]+1)
-            action = Space.move_valid(start, end, currentcolor, movestaken)
-
-            # if action is valid, and no path has been found, # movevalid checks if the space is not been touched yet.
-            if (action == currentcolor or action == 'e') and not Path:
-
-                curr.children.append(Grid.Node(value={'dist': Space.distance(end, Space.starts[currentcolor][1]),
-                                                      'curr': end,
-                                                      'color': currentcolor,
-                                                      'parent': curr
-                                                      }))
-                frontier.append(curr.children[-1])
-                movestaken.append(end)
-
-                # if current color is an appropriate end point
-                if Space.starts[currentcolor][1] == end:
-                    # add our color to completed colors section preemptively since we found a path.
-                    ColorsFinished.append(currentcolor)
-                    # The Node we want is put into path to make it read true.
-                    Path = frontier[-1]
+            # print("start and end", start, end)
+            if Path is None:
+                print('right')
+                Path = Space.complete_action( curr, end, currentcolor, movestaken, frontier)
 
             # down
             end = (curr.value['curr'][0]+1, curr.value['curr'][1])
-            action = Space.move_valid(start, end, currentcolor, movestaken)
-
-            # if action is valid, and no path has been found, # movevalid checks if the space is not been touched yet.
-            if (action == currentcolor or action == 'e') and not Path:
-
-                curr.children.append(Grid.Node(value={'dist': Space.distance(end, Space.starts[currentcolor][1]),
-                                                      'curr': end,
-                                                      'color': currentcolor,
-                                                      'parent': curr
-                                                      }))
-                frontier.append(curr.children[-1])
-                movestaken.append(end)
-
-                # if current color is an appropriate end point
-                if Space.starts[currentcolor][1] == end:
-                    # add our color to completed colors section preemptively since we found a path.
-                    ColorsFinished.append(currentcolor)
-                    # The Node we want is put into path to make it read true.
-                    Path = frontier[-1]
+            # print("start and end", start, end)
+            if Path is None:
+                print('down')
+                Path = Space.complete_action( curr, end, currentcolor, movestaken, frontier)
 
             # left
             end = (curr.value['curr'][0], curr.value['curr'][1]-1)
-            action = Space.move_valid(start, end, currentcolor, movestaken)
-
-            # if action is valid, and no path has been found, move_valid checks if the space is not been touched yet.
-            if (action == currentcolor or action == 'e') and not Path:
-
-                curr.children.append(Grid.Node(value={'dist': Space.distance(end, Space.starts[currentcolor][1]),
-                                                      'curr': end,
-                                                      'color': currentcolor,
-                                                      'parent': curr
-                                                      }))
-                frontier.append(curr.children[-1])
-                movestaken.append(end)
-
-                # if current color is an appropriate end point
-                if Space.starts[currentcolor][1] == end:
-                    # add our color to completed colors section preemptively since we found a path.
-                    ColorsFinished.append(currentcolor)
-                    # The Node we want is put into path to make it read true.
-                    Path = frontier[-1]
+            # print("start and end", start, end)
+            if Path is None:
+                print('left')
+                Path = Space.complete_action( curr, end, currentcolor, movestaken, frontier)
 
             # if there is nothing in the frontier and path hasn't been found, break and get ready to clear
             # this color.
             if not frontier:
                 Path = None
 
+            for i in Space.space:
+                for j in i:
+                    print(j, end=' ')
+                print('')
+
             # if we found a path, we'll break from the loop to work with that path.
 
         # Path found, lets add it to the current grid. Finishing the While loop will get us a new color.
         if Path:
+            ColorsFinished.append(currentcolor)
             backtrack = []
             Back = Path
             while Back.value['parent'] is not None:
                 backtrack.append(Back.value['curr'])
                 Back = Back.value['parent']
             backtrack.append(Back.value['curr'])
-            Space.addpath(currentcolor, backtrack)
+            Space.add_path(currentcolor, backtrack)
             Path = False
             frontier = []
             FinalTrack[currentcolor] = backtrack

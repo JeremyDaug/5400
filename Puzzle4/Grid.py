@@ -1,5 +1,6 @@
 import math
 
+
 class Grid:
     """
     A class that will simulate our grid, automatically fills itself out with data
@@ -31,11 +32,12 @@ class Grid:
 
         # simulated graph made. GTFO
 
-    def move_valid(self, startpoint, endpoint, currentColor, taken_data=None):
+    def move_valid(self, startpoint, endpoint, currentcolor, taken_data=None):
         """
         Move function for our graph, ensures proper movement.
         :param startpoint: The point(tuple) we are starting at,
         :param endpoint: The point(Tuple) we are attempting to move to.
+        :param currentcolor: The we are moving from.
         :param taken_data: Any nodes previously taken to ensure no backtracking or overlapping.
                            If No previous moves it will be an empty array. Should be list of Tuples.
         :return: If valid it returns the value of the space, If invalid it returns False.
@@ -58,7 +60,7 @@ class Grid:
         if endpoint in taken_data:
             return False
         # if empty or same color
-        elif end_color == 'e' or currentColor == end_color:
+        elif end_color == 'e' or currentcolor == end_color:
             return end_color
         # Color does not match, space not valid.
         else:
@@ -75,7 +77,7 @@ class Grid:
         """
         return math.fabs(p0[0]-p1[0])+math.fabs(p0[1]-p1[1])
 
-    def addpath(self, color, path_taken):
+    def add_path(self, color, path_taken):
         """
         Updates the grid with a discovered path
         :param color: The color of the path
@@ -85,13 +87,44 @@ class Grid:
         for X in path_taken:
             self.space[X[0]][X[1]] = color
 
+    def complete_action(self, curr, end, currentcolor, movestaken, frontier):
+        """
+        Goes through and adds a valid move that we've made to our information,
+        :param curr: Our current node
+        :param end:  Our end ponit
+        :param currentcolor:
+        :param movestaken:
+        :param frontier:
+        :return:
+        """
+        action = self.move_valid(curr.value['curr'], end, currentcolor, movestaken)
+
+        # if action is valid, and no path has been found, # movevalid checks if the space is not been touched yet.
+        if end not in movestaken and (action == 'e' or currentcolor == action):
+
+            curr.children.append(Node(value={'dist': self.distance(end, self.starts[currentcolor][1]),
+                                             'curr': end,
+                                             'color': currentcolor,
+                                             'parent': curr
+                                             }))
+            frontier.append(curr.children[-1])
+            movestaken.append(end)
+            print(curr.value['curr'], end)
+
+            # if current color is an appropriate end point
+            if self.starts[currentcolor][1] == end:
+                # The Node we want is put into path to make it read true.
+                return frontier[-1]
+
+        return None
+
 
 class Node:
     """
     A quick tree to keep our paths straight, only includes the current space, current distance to end,
     the color, and it's parent. If it is the head then 'parent' DNE in value.
 
-    'parent' in value should always either point to a node or None, if it doesn't exist problems may arise.
+    'parent' in value should always either point to a node or None, if it isn't problems may arise.
     """
     def __init__(self, value, children=None):
         if children is None:
@@ -101,3 +134,17 @@ class Node:
         self.children = children
         if 'parent' not in self.value:
             self.value['parent'] = None
+
+    def node_depth(self):
+        """
+        Gives us our path distance from the head to the current node, in this case it's the number of steps.
+        :return: Returns an integer that is equal to the nodes depth in the tree from it's head.
+        """
+        if 'parent' not in self.value:
+            raise Exception('Tree Error')
+        elif self.value['parent'] is None:
+            print('Head Found')
+            return 0
+        else:
+            print('Next Please')
+            return self.value['parent'].node_depth() + 1
