@@ -19,7 +19,7 @@ class Tree:
         return
 
     def add(self, key, data):
-        self.Active.kids[key] = Node(self.Active, self.Active.level+1)
+        self.Active.kids[key] = Node(self.Active, self.Active.level+1, data)
         return
 
     def delete(self, key):

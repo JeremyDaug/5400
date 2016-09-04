@@ -4,9 +4,11 @@ The main file of our puzzle solver.
 
 from Puzzle1 import Warehouse
 import Tree
+import datetime
+import sys
+start = datetime.datetime.now()
 
-
-file_name = "Puzzle1.txt"
+file_name = str(sys.argv[1])
 
 # prerun setup.
 start_point = Warehouse.Warehouse(file_name)
@@ -27,6 +29,7 @@ Frontier = [states.Head]
 
 if __name__ == '__main__':
     solved = False
+    step = 0
     while not solved:
         states.Active = Frontier.pop(0)
         # up
@@ -59,6 +62,7 @@ if __name__ == '__main__':
         # right
         Right = states.Active.data.move(R, start_point.targets)
         if Right is not None:
+            step += 1
             states.add(R, Right)
             if start_point.check_soln(Right.grid):
                 states.Active = states.Active.kids[R]
@@ -66,4 +70,21 @@ if __name__ == '__main__':
             else:
                 Frontier.append(states.Active.kids[R])
 
-    print('WE DID IT I THINK!')
+    end = datetime.datetime.now()
+    if solved:
+        output = str((end-start).microseconds) + '\n'
+        output += str(states.Active.data.path_length()) + '\n'
+        for i in states.Active.data.steps:
+            output += i
+        output += '\n'
+        output += str(states.Active.data.width) + ' ' + \
+            str(states.Active.data.height) + '\n'
+        output += str(states.Active.data.actor[0]) + ' ' + \
+            str(states.Active.data.actor[1]) + '\n'
+        for i in states.Active.data.grid:
+            for j in i:
+                output += j
+            output += '\n'
+
+        with open("soln_"+file_name, 'w') as out:
+            out.write(output)

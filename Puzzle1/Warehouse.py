@@ -37,6 +37,11 @@ class State:
         self.steps = steps
         return
 
+    def print(self):
+        for i in self.grid:
+            print(i)
+        print('\n')
+
     def path_length(self):
         return len(self.steps)
 
@@ -45,19 +50,19 @@ class State:
             actor = self.actor
         target = None
         if dir == 'U':
-            target = (actor[0], actor[1] - 1)
-        elif dir == 'D':
-            target = (actor[0], actor[1] + 1)
-        elif dir == 'L':
             target = (actor[0] - 1, actor[1])
-        elif dir == 'R':
+        elif dir == 'D':
             target = (actor[0] + 1, actor[1])
+        elif dir == 'L':
+            target = (actor[0], actor[1] - 1)
+        elif dir == 'R':
+            target = (actor[0], actor[1] + 1)
         return target
 
     def in_grid(self, target):
-        if not 0 < target[0] < self.width:
+        if not 0 <= target[0] < self.width:
             return False
-        if not 0 < target[1] < self.height:
+        if not 0 <= target[1] < self.height:
             return False
         return True
 
