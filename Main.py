@@ -5,70 +5,72 @@ The main file of our puzzle solver.
 from Puzzle1 import Warehouse
 import Tree
 import datetime
+import timeit
 import sys
 start = datetime.datetime.now()
 
-file_name = str(sys.argv[1])
 
-# prerun setup.
-start_point = Warehouse.Warehouse(file_name)
-states = Tree.Tree()
-states.Head.data = Warehouse.State(start_point.height,
-                                   start_point.width,
-                                   start_point.start,
-                                   start_point.grid,
-                                   [])
-# helper vars since these will probably be used alot.
-U = 'U'
-D = 'D'
-L = 'L'
-R = 'R'
+def main(argv):
+    file_name = str(argv[1])
 
-# a frontier that we'll explore. FIFO.
-Frontier = [states.Head]
+    # prerun setup.
+    start_point = Warehouse.Warehouse(file_name)
+    states = Tree.Tree()
+    states.Head.data = Warehouse.State(start_point.height,
+                                       start_point.width,
+                                       start_point.start,
+                                       start_point.grid,
+                                       [])
+    # helper vars since these will probably be used alot.
+    up_dir = 'U'
+    down_dir = 'D'
+    left_dir = 'L'
+    right_dir = 'R'
 
-if __name__ == '__main__':
+    # a frontier that we'll explore. FIFO.
+    frontier = [states.Head]
+
     solved = False
     step = 0
     while not solved:
-        states.Active = Frontier.pop(0)
+        states.Active = frontier.pop(0)
         # up
-        Up = states.Active.data.move(U, start_point.targets)
+        Up = states.Active.data.move(up_dir, start_point.targets)
         if Up is not None:
-            states.add(U, Up)
+            states.add(up_dir, Up)
             if start_point.check_soln(Up.grid):
-                states.Active = states.Active.kids[U]
-                solved = 'U'
+                states.Active = states.Active.kids[up_dir]
+                solved = up_dir
             else:
-                Frontier.append(states.Active.kids[U])
+                frontier.append(states.Active.kids[up_dir])
         # down
-        Down = states.Active.data.move(D, start_point.targets)
+        Down = states.Active.data.move(down_dir, start_point.targets)
         if Down is not None:
-            states.add(D, Down)
+            states.add(down_dir, Down)
             if start_point.check_soln(Down.grid):
-                states.Active = states.Active.kids[D]
-                solved = 'D'
+                states.Active = states.Active.kids[down_dir]
+                solved = down_dir
             else:
-                Frontier.append(states.Active.kids[D])
+                frontier.append(states.Active.kids[down_dir])
         # left
-        Left = states.Active.data.move(L, start_point.targets)
+        Left = states.Active.data.move(left_dir, start_point.targets)
         if Left is not None:
-            states.add(L, Left)
+            states.add(left_dir, Left)
             if start_point.check_soln(Left.grid):
-                states.Active = states.Active.kids[L]
-                solved = 'L'
+                states.Active = states.Active.kids[left_dir]
+                solved = left_dir
             else:
-                Frontier.append(states.Active.kids[L])
+                frontier.append(states.Active.kids[left_dir])
         # right
-        Right = states.Active.data.move(R, start_point.targets)
+        Right = states.Active.data.move(right_dir, start_point.targets)
         if Right is not None:
             step += 1
-            states.add(R, Right)
+            states.add(right_dir, Right)
             if start_point.check_soln(Right.grid):
-                states.Active = states.Active.kids[R]
-                solved = 'R'
+                states.Active = states.Active.kids[right_dir]
+                solved = right_dir
             else:
-                Frontier.append(states.Active.kids[R])
+                frontier.append(states.Active.kids[right_dir])
 
     end = datetime.datetime.now()
     if solved:
@@ -88,3 +90,8 @@ if __name__ == '__main__':
 
         with open("soln_"+file_name, 'w') as out:
             out.write(output)
+
+    print('WE DID IT I THINK!')
+
+if __name__ == '__main__':
+    main(sys.argv)

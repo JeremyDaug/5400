@@ -37,11 +37,6 @@ class State:
         self.steps = steps
         return
 
-    def print(self):
-        for i in self.grid:
-            print(i)
-        print('\n')
-
     def path_length(self):
         return len(self.steps)
 
