@@ -29,17 +29,16 @@ def main(argv):
             # do the move (if possible)
             end_dirs[i] = Puzzle.move(i)
             # If the move succeded (returned not None) do more.
-            if __name__ == '__main__':
-                if end_dirs[i] is not None:
-                    # check if it's a solution
-                    if Puzzle.check_soln():
-                        # if it wrap up and break out
-                        solved = i
-                        Puzzle.Active = end_dirs[i]
-                        break
-                    else:
-                        # if it isn't add it to the fronteir and move on
-                        frontier.append(end_dirs[i])
+            if end_dirs[i] is not None:
+                # check if it's a solution
+                if Puzzle.check_soln(end_dirs[i].grid):
+                    # if it wrap up and break out
+                    solved = i
+                    Puzzle.Active = end_dirs[i]
+                    break
+                else:
+                    # if it isn't add it to the frontier and move on
+                    frontier.append(end_dirs[i])
 
     end = datetime.datetime.now()
     if solved:
