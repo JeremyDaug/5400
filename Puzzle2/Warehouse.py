@@ -103,10 +103,21 @@ class StateNode:
 
     def delete(self, key):
         """
-        Deletes a child
+        Deletes a child and all of it's children, on down
         :param key: The key to the child we want to delete.
         """
+        self.kids[key].deep_delete()
         self.kids.pop(key)
+        return
+
+    def deep_delete(self):
+        """
+        A recursive delete function to be used to delete all of it's children
+        on down.
+        """
+        for key in self.kids:
+            self.kids[key].deep_delete()
+        self.kids.clear()
         return
 
     def get_target(self, dir, actor=None):

@@ -15,30 +15,58 @@ def main(argv):
     # prerun setup.
     Puzzle = Warehouse.Warehouse(file_name)
 
-    # a frontier that we'll explore. FIFO.
+    # a frontier that we'll explore. FILO.
     frontier = [Puzzle.Head]
 
     solved = False
-    step = 0
+    # Set our max steps to start at 0 and increment for every major loop
+    max_step = 0
     while not solved:
-        Puzzle.Active = frontier.pop(0)
+        Puzzle.Active = frontier.pop(len(frontier)-1)
         dirs = [UP, DOWN, LEFT, RIGHT]
         end_dirs = {UP: None, DOWN: None, LEFT: None, RIGHT: None}
-        # run through the directions
-        for i in dirs:
-            # do the move (if possible)
-            end_dirs[i] = Puzzle.move(i)
-            # If the move succeded (returned not None) do more.
-            if end_dirs[i] is not None:
-                # check if it's a solution
-                if Puzzle.check_soln(end_dirs[i].grid):
-                    # if it wrap up and break out
-                    solved = i
-                    Puzzle.Active = end_dirs[i]
-                    break
+        # if our current step is at the max distance, then get the next
+        # frontier node as we already have
+        if Puzzle.Active.step_count <= max_step:
+            print(Puzzle.Active.steps)
+            # run through the directions
+            for i in dirs:
+                # if it already exists in the tree, don't move again,
+                #  save space
+                if i in Puzzle.Active.kids.keys():
+                    end_dirs[i] = Puzzle.Active.kids[i]
                 else:
-                    # if it isn't add it to the frontier and move on
-                    frontier.append(end_dirs[i])
+                    # if it doesn't exist do the move.
+                    end_dirs[i] = Puzzle.move(i)
+                    # If the move succeded (returned not None) do more.
+                if end_dirs[i] is not None:
+                    # check if it's a solution
+                    if Puzzle.check_soln(end_dirs[i].grid):
+                        # if it wrap up and break out
+                        solved = i
+                        Puzzle.Active = end_dirs[i]
+                        break
+                    else:
+                        # if it isn't add it to the frontier and move on
+                        frontier.append(end_dirs[i])
+        height = Puzzle.Head.height
+        width = Puzzle.Head.width
+        # if the frontier has emptied and we are below the max steps
+        # we put an absolute maximum on it equivalent to stepping across the
+        # entire grid twice for the worst case scenario where it can't find an
+        # end
+        if frontier:
+            pass  # if we have a frontier, simply move on.
+        elif not frontier and height*width*2 > max_step:
+            # reset our Active pointer
+            Puzzle.back_to_head()
+            # Bump up our max step
+            max_step += 1
+            # reset the frontier
+            frontier.append(Puzzle.Head)
+        # if empty and at the end.
+        elif not frontier and height*width*2 == max_step:
+            print("Uh Oh, we couldn't find an answer.")
 
     end = datetime.datetime.now()
     if solved:
@@ -58,8 +86,6 @@ def main(argv):
 
         with open("soln_"+file_name, 'w') as out:
             out.write(output)
-
-    print('WE DID IT I THINK!')
 
 if __name__ == '__main__':
     main(sys.argv)
