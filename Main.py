@@ -28,7 +28,6 @@ def main(argv):
         # if our current step is at the max distance, then get the next
         # frontier node as we already have
         if Puzzle.Active.step_count <= max_step:
-            print(Puzzle.Active.steps)
             # run through the directions
             for i in dirs:
                 # if it already exists in the tree, don't move again,
@@ -41,7 +40,7 @@ def main(argv):
                     # If the move succeded (returned not None) do more.
                 if end_dirs[i] is not None:
                     # check if it's a solution
-                    if Puzzle.check_soln(end_dirs[i].grid):
+                    if end_dirs[i].check_soln(Puzzle.targets):
                         # if it wrap up and break out
                         solved = i
                         Puzzle.Active = end_dirs[i]
@@ -62,6 +61,7 @@ def main(argv):
             Puzzle.back_to_head()
             # Bump up our max step
             max_step += 1
+            print(max_step)
             # reset the frontier
             frontier.append(Puzzle.Head)
         # if empty and at the end.
@@ -70,6 +70,7 @@ def main(argv):
 
     end = datetime.datetime.now()
     if solved:
+        Puzzle.Active.sutput(file_name, start, end)
         output = str((end-start).microseconds) + '\n'
         output += str(Puzzle.Active.step_count) + '\n'
         for i in Puzzle.Active.steps:
