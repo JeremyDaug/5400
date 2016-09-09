@@ -14,10 +14,20 @@ CRATE = 'c'
 TARGET = 't'
 
 
+def add_tuples(x, y):
+    """
+    a helper to add tuples together more nicely.
+    :param x: first tuple
+    :param y: 2nd tuple
+    :return: the resultant tuple
+    """
+    return tuple((x[0]+y[0], x[1]+y[1]))
+
+
 class Warehouse:
     def __init__(self, file_name):
-        with open(file_name) as file:
-            file_lines = file.read().split('\n')
+        with open(file_name) as the_file:
+            file_lines = the_file.read().split('\n')
             size = file_lines[0].split(' ')
             # grid size
             width = int(size[0])
@@ -27,14 +37,12 @@ class Warehouse:
             start = (int(start[0]), int(start[1]))
             # our grid
             grid = [[j for j in i] for i in file_lines[2:]]
-            # Tree setup
-            self.Head = StateNode(None,
-                                  0,
-                                  height,
-                                  width,
-                                  start,
-                                  grid,
-                                  [])
+            # State Space Setup
+            self.Head = State(height,
+                              width,
+                              start,
+                              grid,
+                              [])
             self.Active = self.Head
             # the endpoints for our crates, for ease of access
             self.targets = []
@@ -52,93 +60,72 @@ class Warehouse:
         self.Active = self.Head
         return
 
-    def check_soln(self, grid=None):
-        """
-        A Solution Checker
-        :param grid: The grid we are checking.
-        :return: True if solved, False otherwise.
-        """
-        if grid is None:
-            grid = self.Active.grid
-        for t in self.targets:
-            if not grid[t[0]][t[1]] == CRATE:
-                return False
-        return True
-
-    def move(self, dir):
+    def move(self, direction):
         """
         A delegate function to make using a move easier.
-        :param dir: the direction we want to go.
+        :param direction: the direction we want to go.
         :return: the new node that has been added to our tree. If the move
         failed it returns None.
         """
-        return self.Active.move(dir, self.targets)
+        return self.Active.move(direction, self.targets)
 
 
-class StateNode:
-    def __init__(self, parent, step_count, height, width, actor, grid, steps):
+class State:
+    def __init__(self, height, width, actor, grid, steps):
         self.height = height
         self.width = width
         self.actor = actor
         self.grid = [[j for j in i] for i in grid]
         self.steps = steps
-        self.parent = parent
-        self.kids = dict()
-        self.step_count = step_count
         return
 
-    def add(self, key, height, width, actor, grid, steps):
-        """
-        Adds a new kid to the node
-        :param key: the key to the child
-        :param height: height of the grid
-        :param width: width of the grid
-        :param actor: the current location of the actor
-        :param grid: the state of the grid
-        :param steps: the steps taken to get to the grid
-        """
-        self.kids[key] = StateNode(self, self.step_count + 1,
-                                   height, width, actor, grid, steps)
-        return
+    def step_count(self):
+        return len(self.steps)
 
-    def delete(self, key):
-        """
-        Deletes a child and all of it's children, on down
-        :param key: The key to the child we want to delete.
-        """
-        self.kids[key].deep_delete()
-        self.kids.pop(key)
-        return
+    def output(self, file_name, start, end):
+        output = str((end - start) * 10 ** 6) + '\n'
+        output += str(self.step_count()) + '\n'
+        for i in self.steps:
+            output += i
+        output += '\n'
+        output += str(self.width) + ' '
+        output += str(self.height) + '\n'
+        output += str(self.actor[0]) + ' '
+        output += str(self.actor[1]) + '\n'
+        for i in self.grid:
+            for j in i:
+                output += j
+            output += '\n'
 
-    def deep_delete(self):
-        """
-        A recursive delete function to be used to delete all of it's children
-        on down.
-        """
-        for key in self.kids:
-            self.kids[key].deep_delete()
-        self.kids.clear()
-        return
+        with open("soln_" + file_name, 'w') as out:
+            out.write(output)
 
-    def get_target(self, dir, actor=None):
+    def check_soln(self, targets):
+        """
+        A Solution Checker
+        :param targets: The grid we are checking.
+        :return: True if solved, False otherwise.
+        """
+        for t in targets:
+            if not self.grid[t[0]][t[1]] == CRATE:
+                return False
+        return True
+
+    def get_target(self, direction, actor=None):
         """
         Relative direction getter for our position
-        :param dir: the direction we want to go
-        :param actor:
-        :return:
+        :param direction: the direction we want to go
+        :param actor: the place we are starting our move from. if no location
+        is given we use the actor of the state.
+        :return: the target square.
         """
         if actor is None:
             actor = self.actor
-        target = None
-        if dir == UP:
-            target = (actor[0] - 1, actor[1])
-        elif dir == DOWN:
-            target = (actor[0] + 1, actor[1])
-        elif dir == LEFT:
-            target = (actor[0], actor[1] - 1)
-        elif dir == RIGHT:
-            target = (actor[0], actor[1] + 1)
-        return target
+        dir_moves = {UP: (-1, 0),
+                     DOWN: (1, 0),
+                     LEFT: (0, -1),
+                     RIGHT: (0, 1)}
+        return add_tuples(actor, dir_moves[direction])
 
     def in_grid(self, target):
         """
@@ -152,15 +139,15 @@ class StateNode:
             return False
         return True
 
-    def check_move(self, dir):
+    def check_move(self, direction):
         """
         Checks if our move is valid or not.
-        :param dir: the direction we want to move
+        :param direction: the direction we want to move
         :return: We return True if the space we want to move
          to is empty (valid), we return CRATE if there's a crate to push and we
          can push the crate, otherwise we return False.
         """
-        target = self.get_target(dir)
+        target = self.get_target(direction)
         # check if in the grid
         if not self.in_grid(target):
             return False
@@ -169,51 +156,52 @@ class StateNode:
             return False
         # check for box and valid box move
         if self.grid[target[0]][target[1]] == CRATE:
-            # TODO check for another box in the way
             # if box in the way, check if we can move the box properly
-            box = self.get_target(direction, target)
+            box_move = self.get_target(direction, target)
             # if box move in grid
-            if not self.in_grid(box):
+            if not self.in_grid(box_move):
                 return False
-            # if wall in way
-            if self.grid[box[0]][box[1]] == WALL:
+            # if wall or crate in the way.
+            is_wall = self.grid[box_move[0]][box_move[1]] == WALL
+            is_crate = self.grid[box_move[0]][box_move[1]] == CRATE
+            if is_wall or is_crate:
                 return False
             return CRATE
         # if no crate, no wall, and in grid, we're good.
         else:
             return True
 
-    def move(self, dir, end_points):
+    def move(self, direction, end_points):
         """
         A move function to do all the work of moving. Will move the actor,
         the crate (if valid as well), and create a new StateNode, and add it
         to our kids. If it is not a valid move it will put None in the kid that
         would've been made, marking that direction as invalid.
-        :param dir: The direction we are trying to move.
+        :param direction: The direction we are trying to move.
         :param end_points: The target squares, so that if we move a crate off
         a target we reapply it to the grid.
+        :return : Returns the state that the move would produce, if it's not a
+        valid move then it returns None.
         """
         # check if it's valid
-        valid = self.check_move(dir)
+        valid = self.check_move(direction)
         if not valid:
-            self.kids[dir] = None
-            return self.kids[dir]
+            return None
         # since it is, do it.
-        target = self.get_target(dir)
-        newGrid = [[j for j in i] for i in self.grid]
+        target = self.get_target(direction)
+        new_grid = [[j for j in i] for i in self.grid]
         # if theres' a box, move it.
         if valid == CRATE:
-            box = self.get_target(dir, target)
-            newGrid[target[0]][target[1]] = SPACE
-            newGrid[box[0]][box[1]] = CRATE
+            box = self.get_target(direction, target)
+            new_grid[target[0]][target[1]] = SPACE
+            new_grid[box[0]][box[1]] = CRATE
             # if it is moved off an endpoint, then put the target back.
             if target in end_points:
-                newGrid[target[0]][target[1]] = TARGET
-        # add our dir as our newest step.
+                new_grid[target[0]][target[1]] = TARGET
+        # add our direction as our newest step.
         next_step = self.steps[:]
-        next_step.append(dir)
-        self.add(dir, self.height, self.width, target, newGrid, next_step)
-        return self.kids[dir]
+        next_step.append(direction)
+        return State(self.height, self.width, target, new_grid, next_step)
 
 
 if __name__ == "__main__":
