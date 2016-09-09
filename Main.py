@@ -70,7 +70,7 @@ def main(argv):
 
     end = datetime.datetime.now()
     if solved:
-        Puzzle.Active.sutput(file_name, start, end)
+        Puzzle.Active.output(file_name, start, end)
         output = str((end-start).microseconds) + '\n'
         output += str(Puzzle.Active.step_count) + '\n'
         for i in Puzzle.Active.steps:
