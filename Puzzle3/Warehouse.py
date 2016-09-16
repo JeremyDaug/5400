@@ -13,6 +13,17 @@ SPACE = '.'
 CRATE = 'c'
 TARGET = 't'
 
+def get_distance(start, end):
+    """
+    A helper to get the step distance between to points. 
+    :param start: The starting point.
+    :param end: the Ending point. 
+    :return: The distance between them.
+    """
+    total = abs(start[0]-end[0])
+    total += abs(start[1]-end[1])
+    return total
+
 
 def add_tuples(x, y):
     """
@@ -69,6 +80,9 @@ class Warehouse:
         """
         return self.Active.move(direction, self.targets)
 
+    def remaining_cost(self):
+        return self.Active.remaining_cost(self.targets)
+
 
 class State:
     def __init__(self, height, width, actor, grid, steps):
@@ -90,23 +104,16 @@ class State:
             for sf, of in zip(s, o):
                 if sf != of:
                     return False
-        # we skip steps, as the number of steps to get to a state doesn't
-        # make that state different.
+        # we skip steps, as the steps to get to a state doesn't
+        # make that state different in this case.
+        return True
 
-
-    def min_steps_left(self):
+    def remaining_cost(self, targets):
         """
-        A helper function which gets the cost to move the crates in the state
-        to the targets.
-
-        It gives slight preferential treatment to
-        dead-end targets as attempting to fill them first opens space for later
-        actions. If a crate is on a target then it has a cost of 0.
-        :return: a list of lists. It is organized by
-        [number of crates][crate info] and the crate info is organized as such.
-        [Crate, cost, target space]
+        A counter to get the effective cost of the current state to exist.
+        :param targets: The target locations.
+        :return: The cost.
         """
-
 
     def step_count(self):
         return len(self.steps)
