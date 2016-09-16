@@ -2,8 +2,8 @@
 The main file of our puzzle solver.
 """
 
-from Puzzle2 import Warehouse
-from Puzzle2.Warehouse import UP, DOWN, LEFT, RIGHT
+from Puzzle3 import Warehouse
+from Puzzle3.Warehouse import UP, DOWN, LEFT, RIGHT
 from time import time
 import sys
 start = time()
