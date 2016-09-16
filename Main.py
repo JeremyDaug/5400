@@ -10,6 +10,11 @@ start = time()
 
 
 def main(argv):
+    """
+    The Algorithm for Greedy Best-First Graph Search
+    :param argv:
+    :return:
+    """
     if len(argv) < 2:
         print("You need to input a single file.")
         return

@@ -1,5 +1,5 @@
 """
-Jeremy Daugherty - Puzzle 2 Iterative-Deepening - Depth-First Tree Search
+Jeremy Daugherty - Puzzle 3 Greedy Best-First Graph Search
 Sokoban Solver V2
 """
 
@@ -78,6 +78,35 @@ class State:
         self.grid = [[j for j in i] for i in grid]
         self.steps = steps
         return
+
+    def __eq__(self, other):
+        if self.height != other.height:
+            return False
+        if self.width != other.width:
+            return False
+        if self.actor != other.actor:
+            return False
+        for s, o in zip(self.grid, other.grid):
+            for sf, of in zip(s, o):
+                if sf != of:
+                    return False
+        # we skip steps, as the number of steps to get to a state doesn't
+        # make that state different.
+
+
+    def min_steps_left(self):
+        """
+        A helper function which gets the cost to move the crates in the state
+        to the targets.
+
+        It gives slight preferential treatment to
+        dead-end targets as attempting to fill them first opens space for later
+        actions. If a crate is on a target then it has a cost of 0.
+        :return: a list of lists. It is organized by
+        [number of crates][crate info] and the crate info is organized as such.
+        [Crate, cost, target space]
+        """
+
 
     def step_count(self):
         return len(self.steps)
