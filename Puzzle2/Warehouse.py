@@ -83,7 +83,7 @@ class State:
         return len(self.steps)
 
     def output(self, file_name, start, end):
-        output = str((end - start) * 10 ** 6) + '\n'
+        output = str(int((end - start) * 10 ** 6)) + '\n'
         output += str(self.step_count()) + '\n'
         for i in self.steps:
             output += i

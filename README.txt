@@ -1,6 +1,9 @@
-To run this program, simply drop the puzzle you want to run in the folder with main, and run Main.py through the Python Interpreter.
+To run this program, simply drop the puzzle you want to run in the folder with
+main, and run Main.py through the Python Interpreter.
 
-You select the file you use via a command line input of what puzzle you want it to run. It will output the solution file under the name soln_[original name].txt.
+You select the file you use via a command line input of what puzzle you want
+it to run. It will output the solution file under the name
+soln_[original name].txt.
 
 python Main.py [Filename.txt]
 
