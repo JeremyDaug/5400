@@ -1,6 +1,6 @@
 """
 Jeremy Daugherty - Puzzle 3 Greedy Best-First Graph Search
-Sokoban Solver V2
+Sokoban Solver V3
 """
 
 # a few necessary constants
@@ -12,6 +12,7 @@ WALL = 'w'
 SPACE = '.'
 CRATE = 'c'
 TARGET = 't'
+
 
 def get_distance(start, end):
     """
@@ -45,7 +46,8 @@ class Warehouse:
             height = int(size[1])
             start = file_lines[1].split(' ')
             # starting point
-            start = (int(start[0]), int(start[1]))
+            start = (int(start[1]), int(start[0]))
+            print(start)
             # our grid
             grid = [[j for j in i] for i in file_lines[2:]]
             # State Space Setup
@@ -56,13 +58,42 @@ class Warehouse:
                               [])
             self.Active = self.Head
             # the endpoints for our crates, for ease of access
+            self.frontier = [self.Head]
+            self.explored = []
             self.targets = []
-            for i in range(width):
-                for j in range(height):
+            for i in range(height):
+                for j in range(width):
                     if grid[i][j] == TARGET:
                         self.targets.append((i, j))
 
         return
+
+    def check_soln(self):
+        """
+        A delegate function that calls the check solution function on the current active state.
+        :return: The result of the check.
+        """
+        return self.Active.check_soln(self.targets)
+
+    def get_best(self):
+        """
+        A function that finds the best possible state according to State.cost and returns
+        it, popping it off in the process.
+        :return: The best state in the frontier. If states share the value, it will take
+        the first option in the list.
+        """
+        best = (-1, -1)
+        for i in range(len(self.frontier)):
+            current = self.frontier[i].cost(self.targets)
+            if best[0] < 0 or best[0] > current:
+                best = (current, i)
+        test = ""
+        for i in self.frontier:
+            test += str(i.cost(self.targets)) + ", "
+        print("Chose: " + str(best))
+        print(test)
+        # with our state chosen pop it off the frontier and return it
+        return self.frontier.pop(best[1])
 
     def back_to_head(self):
         """
@@ -80,8 +111,8 @@ class Warehouse:
         """
         return self.Active.move(direction, self.targets)
 
-    def remaining_cost(self):
-        return self.Active.remaining_cost(self.targets)
+    def cost(self):
+        return self.Active.cost(self.targets)
 
 
 class State:
@@ -105,15 +136,53 @@ class State:
                 if sf != of:
                     return False
         # we skip steps, as the steps to get to a state doesn't
-        # make that state different in this case.
+        # make that state meaningfully different. It also implies we got to the state faster already.
         return True
 
-    def remaining_cost(self, targets):
+    def cost(self, targets):
         """
-        A counter to get the effective cost of the current state to exist.
-        :param targets: The target locations.
-        :return: The cost.
+        Gets the value cost of this state, the lower the closer it is to solved.
+        :param targets: The target squares, imported from Warehouse.
+        :return: the value of the state, the lower the better.
         """
+        # get the crate locations for use.
+        crates = self.crates()
+        # get the distance from the target squares to the nearest crates.
+        total = 0
+        for i in targets:
+            shortest = -1
+            for j in crates:
+                current = get_distance(i, j)
+                if current < shortest or shortest < 0:
+                    shortest = current
+            total += shortest
+        # add onto the total the distance the actor has traveled.
+        total += self.closest_box(crates)
+        return total
+
+    def closest_box(self, crates):
+        """
+        Gets the distance between the actor and the nearest chest.
+        :return: the distance between actor and nearest chest.
+        """
+        best = -1
+        for i in crates:
+            current = get_distance(self.actor, i)
+            if best < 0 or best > current:
+                best = current
+        return best
+
+    def crates(self):
+        """
+        A function that finds all the crates in the grid and returns their locations in a list.
+        :return: The list of locations that have crates.
+        """
+        ret = []
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.grid[i][j] == CRATE:
+                    ret.append((i, j))
+        return ret
 
     def step_count(self):
         return len(self.steps)
@@ -169,9 +238,9 @@ class State:
         :param target: The space we want to move to
         :return: True if the target is in the Grid, else False
         """
-        if not 0 <= target[0] < self.width:
+        if not 0 <= target[0] < self.height:
             return False
-        if not 0 <= target[1] < self.height:
+        if not 0 <= target[1] < self.width:
             return False
         return True
 
