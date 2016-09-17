@@ -36,7 +36,7 @@ def main(argv):
         Puzzle.Active = Puzzle.get_best()
         # if the steps are higher then our hard_max, then move on.
         if Puzzle.Active.step_count() <= hard_max:
-            print(Puzzle.Active.steps)
+            # print(Puzzle.Active.steps)
             # check if our current state is the goal
             if Puzzle.check_soln():
                 # if it is, mark it and break out of this popsicle stand.

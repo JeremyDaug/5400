@@ -47,25 +47,25 @@ class Warehouse:
             start = file_lines[1].split(' ')
             # starting point
             start = (int(start[1]), int(start[0]))
-            print(start)
+            # print(start)
             # our grid
             grid = [[j for j in i] for i in file_lines[2:]]
-            # State Space Setup
-            self.Head = State(height,
-                              width,
-                              start,
-                              grid,
-                              [])
-            self.Active = self.Head
-            # the endpoints for our crates, for ease of access
-            self.frontier = [self.Head]
-            self.explored = []
-            self.targets = []
-            for i in range(height):
-                for j in range(width):
-                    if grid[i][j] == TARGET:
-                        self.targets.append((i, j))
-
+        # State Space Setup
+        self.Head = State(height,
+                          width,
+                          start,
+                          grid,
+                          [])
+        self.Active = self.Head
+        # the endpoints for our crates, for ease of access
+        self.frontier = [self.Head]
+        self.explored = []
+        self.targets = []
+        for i in range(height):
+            for j in range(width):
+                if grid[i][j] == TARGET:
+                    self.targets.append((i, j))
+        self.Active.weight = self.cost()
         return
 
     def check_soln(self):
@@ -84,14 +84,14 @@ class Warehouse:
         """
         best = (-1, -1)
         for i in range(len(self.frontier)):
-            current = self.frontier[i].cost(self.targets)
+            current = self.frontier[i].weight
             if best[0] < 0 or best[0] > current:
                 best = (current, i)
-        test = ""
-        for i in self.frontier:
-            test += str(i.cost(self.targets)) + ", "
-        print("Chose: " + str(best))
-        print(test)
+        # test = ""
+        # for i in self.frontier:
+        #     test += str(i.weight) + ", "
+        # print("Chose: " + str(best))
+        # print(test)
         # with our state chosen pop it off the frontier and return it
         return self.frontier.pop(best[1])
 
@@ -109,7 +109,10 @@ class Warehouse:
         :return: the new node that has been added to our tree. If the move
         failed it returns None.
         """
-        return self.Active.move(direction, self.targets)
+        temp = self.Active.move(direction, self.targets)
+        if temp:
+            temp.weight = temp.cost(self.targets)
+        return temp
 
     def cost(self):
         return self.Active.cost(self.targets)
@@ -122,6 +125,7 @@ class State:
         self.actor = actor
         self.grid = [[j for j in i] for i in grid]
         self.steps = steps
+        self.weight = None
         return
 
     def __eq__(self, other):
@@ -147,18 +151,33 @@ class State:
         """
         # get the crate locations for use.
         crates = self.crates()
-        # get the distance from the target squares to the nearest crates.
+        # get the distance from the crates to the nearest targets
         total = 0
-        for i in targets:
+        for i in crates:
             shortest = -1
-            for j in crates:
+            for j in targets:
                 current = get_distance(i, j)
                 if current < shortest or shortest < 0:
                     shortest = current
             total += shortest
-        # add onto the total the distance the actor has traveled.
-        total += self.closest_box(crates)
+        # add the distance between the actor and the nearest box - 1 (an actor adjacent to a box is counted as 0).
+        total += self.closest_box(crates)-1
+        # print('actor: ', self.actor)
+        # print('cost: ', total)
+        # for i in self.grid:
+        #     print(i)
         return total
+
+    def can_be_solved(self, crate, targets):
+        """
+        Checker to see if a crate is in a position that can't physically can't reach a target.
+
+        This will probably be messy.
+        :param crate:
+        :param targets:
+        :return:
+        """
+        pass
 
     def closest_box(self, crates):
         """
