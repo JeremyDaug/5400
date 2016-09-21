@@ -2,8 +2,8 @@
 The main file of our puzzle solver.
 """
 
-from Puzzle3 import Warehouse
-from Puzzle3.Warehouse import UP, DOWN, LEFT, RIGHT
+from Puzzle4 import Warehouse
+from Puzzle4.Warehouse import UP, DOWN, LEFT, RIGHT
 from time import time
 import sys
 start = time()
@@ -44,7 +44,8 @@ def main(argv):
                 break
             # if it's not, then put it in the explored set
             Puzzle.explored.append(Puzzle.Active)
-            # run through all the directions it could go and add them to the frontier.
+            # run through all the directions it
+            # could go and add them to the frontier.
             for i in dirs:
                 # get the next state
                 temp_state = Puzzle.move(i)
@@ -55,11 +56,13 @@ def main(argv):
                         Puzzle.frontier.append(temp_state)
                     # if it's in the explored do nothing and keep going on.
         elif Puzzle.frontier:
-            # if we somehow have a state over our hard_max and our frontier has more in it
+            # if we somehow have a state over our hard_max and
+            # our frontier has more in it
             # then move on.
             continue
         else:
-            # finally if our max step is larger then our hard limit, and the frontier is
+            # finally if our max step is larger then our hard
+            # limit, and the frontier is
             # empty then stop running and output our failure.
             print("Uh Oh, we couldn't find an answer.")
 
