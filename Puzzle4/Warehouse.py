@@ -16,7 +16,8 @@ TARGET = 't'
 
 def get_distance(start, end):
     """
-    A helper to get the step distance between to points. 
+    A helper to get the step distance between to points. Simple Manhattan
+    distance.
     :param start: The starting point.
     :param end: the Ending point. 
     :return: The distance between them.
@@ -77,26 +78,18 @@ class Warehouse:
 
     def get_best(self):
         """
-        A function that finds the best possible state according to State.cost and returns
-        it, popping it off in the process.
-        :return: The best state in the frontier. If states share the value, it will take
-        the first option in the list.
+        A wrapper to get the min out of our frontier, and remove it from the
+        frontier.
+        :return: The best state in the frontier. If states share the value, it
+        will take the first option in the list.
         """
-        best = (-1, -1)
-        for i in range(len(self.frontier)):
-            current = self.frontier[i].weight
-            if best[0] < 0 or best[0] > current:
-                best = (current, i)
-        print(best[0], self.frontier[best[1]].step_count())
-        # for i in self.frontier[best[1]].grid:
+        # get the smallest based on it's weight.
+        smallest = min(self.frontier, key=lambda s: s.weight)
+        self.frontier.remove(smallest)
+        print(smallest.weight, smallest.step_count())
+        # for i in smallest.grid:
         #     print(i)
-        # test = ""
-        # for i in self.frontier:
-        #     test += str(i.weight) + ", "
-        # print("Chose: " + str(best))
-        # print(test)
-        # with our state chosen pop it off the frontier and return it
-        return self.frontier.pop(best[1])
+        return smallest
 
     def back_to_head(self):
         """
