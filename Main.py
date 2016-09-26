@@ -37,6 +37,8 @@ def main(argv):
             # if it is, mark it and break out of this popsicle stand.
             solved = True
             break
+        else:
+            Puzzle.show_grid()
         # if it's not, then put it in the explored set
         Puzzle.explored.append(Puzzle.Active)
         # run through all the directions it
@@ -53,7 +55,7 @@ def main(argv):
 
     end = time()
     if solved:
-        Puzzle.Active.output(file_name, start, end)
+        Puzzle.output(file_name, start, end)
 
 if __name__ == '__main__':
     main(sys.argv)
