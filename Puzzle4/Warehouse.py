@@ -69,9 +69,9 @@ class Warehouse:
             for j in range(self.width):
                 if self.grid[i][j] == TARGET:
                     self.targets.append((i, j))
-        self.Active.weight = self.cost()
         # A dead space checker to assist with finding fail states.
         self.dead_space = self.get_dead_space()
+        self.Active.weight = self.cost()
         return
 
     def get_dead_space(self):
@@ -100,7 +100,7 @@ class Warehouse:
                     corners.append((i, j))
         # loop over all the targets.
         for i in self.targets:
-            ret[i] = self.singular_dead_space(i)
+            ret[i] = self.singular_dead_space(i, corners)
         return ret
 
     def singular_dead_space(self, target, corners):
@@ -132,16 +132,12 @@ class Warehouse:
                     continue
                 # check if there is a wall along the entire path.
                 has_wall = False
-                direction = ''
+                adj = []
                 if active[0] == other[0]:
-                    direction = 'row'
-                elif active[1] == [other[1]]:
-                    direction = 'col'
+                    adj = [(1, 0), (-1, 0)]
+                elif active[1] == other[1]:
+                    adj = [(0, 1), (0, -1)]
                 for space in spaces:
-                    if direction == 'row':
-                        adj = [(1, 0), (-1, 0)]
-                    elif direction == 'col':
-                        adj = [(0, 1), (0, -1)]
                     for curr in adj:
                         wall_check = [add_tuples(i, curr) for i in spaces]
                         # if the target isn't in the grid, then we certainly
@@ -149,20 +145,26 @@ class Warehouse:
                         if not self.in_grid(wall_check[0]):
                             has_wall = True
                             break
-                        # run along and see if it has a wall.
-                        for check in wall_check:
-                            if check != WALL:
-                                # if it doesn't set has_wall to false and
-                                # break out of both loops.
-                                break
+                        # re-get the wall, but this time get the tiles.
+                        wall_check = [self.grid[i[0]][i[1]] for i in wall_check]
+                        # see if there's anything but a wall there.
+                        if SPACE in wall_check or CRATE in wall_check or TARGET in wall_check:
+                            has_wall = False
+                        else:
+                            has_wall = True
                 # if it has a wall then add it to the dead space.
                 if has_wall:
                     for i in spaces:
                         if i not in ret:
                             ret.append(i)
+                # double check and add any lost corners that aren't the target
+                for i in corners:
+                    if i not in ret and i != target:
+                        ret.append(i)
         return ret
 
-    def get_spaces(self, first, second):
+    @staticmethod
+    def get_spaces(first, second):
         """
         A retrieval function to get the spaces in between 2 spaces (inclusive)
         if they are not in the same row it returns a smaller section of them.
@@ -170,7 +172,7 @@ class Warehouse:
         :param second:
         :return:
         """
-        if first[0] < second[0]:
+        if first[0] <= second[0]:
             row1, row2 = first[0], second[0]
         else:
             row1, row2 = second[0], first[0]
@@ -178,8 +180,8 @@ class Warehouse:
             col1, col2 = first[1], second[1]
         else:
             col1, col2 = second[1], first[1]
-        for i in range(row1, row2):
-            for j in range(col1, col2):
+        for i in range(row1, row2+1):
+            for j in range(col1, col2+1):
                 yield (i, j)
         return
 
@@ -215,7 +217,7 @@ class Warehouse:
             # if adj_point is outside of the grid, it's false.
             else:
                 results[key] = False
-        return not results['vertical'] or results['horizontal']
+        return not (results['vertical'] or results['horizontal'])
 
     def get_best(self):
         """
@@ -251,6 +253,24 @@ class Warehouse:
         """
         if state is None:
             state = self.Active
+        # check for solvablility
+        for crate in state.crates:
+            dead = True
+            # check for all the target spaces.
+            for target in self.targets:
+                # if the target already has a crate on it, skip it.
+                if target not in state.crates:
+                    # if the crate is on a target it's fine.
+                    if crate in self.targets:
+                        dead = False
+                        break
+                    # if the crate isn't in any dead_space then set dead to false and shortcut the loop.
+                    if crate not in self.dead_space[target]:
+                        dead = False
+                        break
+            if dead:
+                # if any crate is dead, then return an arbitrarily big number.
+                return 10*10
         # get the distance from the crates to the nearest targets
         total = 0
         for i in state.crates:
@@ -259,22 +279,8 @@ class Warehouse:
                 current = get_distance(i, j)
                 if current < shortest or shortest < 0:
                     shortest = current
-            # check that the current box is in a non-fail state
-            # it's not frozen in a corner or stuck.
-            if not self.crate_movable(i):
-                # if it failed, multiply by an arbitrarily large number.
-                # If it's on a target, then it won't matter as shortest will
-                # be 0.
-                print('Immovable Crate', i)
-                shortest *= 10000
-                if shortest == 0:
-                    # if the crate is immovable, and on a target, then decrease
-                    # it's value a bit more, to reward it. Such spaces are
-                    # more valuable as it' gets the box out of the way of other
-                    # boxes.
-                    shortest = -2
-            # weight the distance on the crates to targets more then actor to
-            # crate to encourage moving boxes over moving itself.
+            if shortest == 0:
+                shortest = -1
             total += 3*shortest
         # add the distance between the actor and the nearest box, being
         # adjacent to the box is considered to be 0.
@@ -298,7 +304,7 @@ class Warehouse:
         :param prev: the previous crates touched.
         :return: True if the crate is movable, false otherwise.
         """
-        # Add the current crate to the prev list, for later. TODO FIX ME
+        # Add the current crate to the prev list, for later.
         if not prev:
             prev = []
         prev.append(crate)
